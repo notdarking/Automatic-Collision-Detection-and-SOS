@@ -74,3 +74,71 @@ def test_simulator_helper_endpoints(client):
     assert run_resp.status_code == 200
     data = run_resp.json()
     assert data["collision_detected"] is False
+
+
+def test_analyze_bad_inputs_never_500(client):
+    # Empty readings -> 422
+    r = client.post(
+        "/api/v1/collision/analyze",
+        json={"vehicle_id": "VH-1", "timestamp": "2026-11-24T14:30:00Z", "readings": []},
+    )
+    assert r.status_code == 422
+
+    # Negative t_ms -> 422
+    r = client.post(
+        "/api/v1/collision/analyze",
+        json={
+            "vehicle_id": "VH-1",
+            "timestamp": "2026-11-24T14:30:00Z",
+            "readings": [{"t_ms": -5, "ax": 0.0, "ay": 0.0, "az": 1.0, "gx": 0.0, "gy": 0.0, "gz": 0.0}],
+        },
+    )
+    assert r.status_code == 422
+
+    # Missing vehicle_id -> 422
+    r = client.post(
+        "/api/v1/collision/analyze",
+        json={
+            "timestamp": "2026-11-24T14:30:00Z",
+            "readings": [{"t_ms": 0, "ax": 0.0, "ay": 0.0, "az": 1.0, "gx": 0.0, "gy": 0.0, "gz": 0.0}],
+        },
+    )
+    assert r.status_code == 422
+
+    # Non-finite value -> 422
+    r = client.post(
+        "/api/v1/collision/analyze",
+        content='{"vehicle_id":"VH-1","timestamp":"2026-11-24T14:30:00Z","readings":[{"t_ms":0,"ax":NaN,"ay":0,"az":1,"gx":0,"gy":0,"gz":0}]}',
+        headers={"Content-Type": "application/json"},
+    )
+    assert 400 <= r.status_code < 500
+
+    # Non-monotonic t_ms -> safe 200
+    r = client.post(
+        "/api/v1/collision/analyze",
+        json={
+            "vehicle_id": "VH-1",
+            "timestamp": "2026-11-24T14:30:00Z",
+            "readings": [
+                {"t_ms": 20, "ax": 0.0, "ay": 0.0, "az": 1.0, "gx": 0.0, "gy": 0.0, "gz": 0.0},
+                {"t_ms": 10, "ax": 0.0, "ay": 0.0, "az": 1.0, "gx": 0.0, "gy": 0.0, "gz": 0.0},
+            ],
+        },
+    )
+    assert r.status_code == 200
+    assert r.json()["collision_detected"] is False
+
+
+def test_detector_derives_step_from_tms_spacing():
+    from collision_engine.api.schemas import IMUReading
+    from collision_engine.detection.detector import MultiStageCollisionDetector
+
+    detector = MultiStageCollisionDetector()
+    readings = [
+        IMUReading(t_ms=0, ax=0.0, ay=0.0, az=1.0, gx=0.0, gy=0.0, gz=0.0),
+        IMUReading(t_ms=20, ax=-8.0, ay=0.0, az=1.0, gx=40.0, gy=0.0, gz=0.0),
+        IMUReading(t_ms=40, ax=-8.0, ay=0.0, az=1.0, gx=40.0, gy=0.0, gz=0.0),
+        IMUReading(t_ms=60, ax=0.0, ay=0.0, az=1.0, gx=0.0, gy=0.0, gz=0.0),
+    ]
+    metrics = detector.analyze(readings)
+    assert metrics.sustained_duration_ms == 40

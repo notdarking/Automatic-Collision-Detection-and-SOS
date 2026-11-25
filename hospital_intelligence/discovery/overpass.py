@@ -53,7 +53,7 @@ def fetch_hospitals_overpass(lat: float, lon: float, radius_km: float = 15.0) ->
                 hospitals = []
                 for el in elements:
                     tags = el.get("tags", {})
-                    name = tags.get("name") or tags.get("name:en") or "Emergency Hospital"
+                    name = tags.get("name") or tags.get("name:en") or "Unnamed hospital (OpenStreetMap)"
                     center = el.get("center") or {}
                     h_lat = el.get("lat") if el.get("lat") is not None else center.get("lat")
                     h_lon = el.get("lon") if el.get("lon") is not None else center.get("lon")

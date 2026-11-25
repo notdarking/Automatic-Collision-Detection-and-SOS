@@ -1,8 +1,17 @@
 import math
 import os
+from pathlib import Path
+from statistics import median
 from typing import List, Dict, Any, Tuple
 from dataclasses import dataclass
 from collision_engine.api.schemas import IMUReading
+
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env", override=False)
+except ImportError:
+    pass
 
 
 @dataclass
@@ -77,9 +86,12 @@ class MultiStageCollisionDetector:
         # Temporal persistence: count consecutive duration where a_norm >= 3.5g
         # Real vehicle impacts last >30ms; potholes/curbs rebound within <15ms
         sustained_threshold = min(4.0, max(3.0, peak_g * 0.45))
-        step_ms = 10
-        if len(readings) > 1 and readings[1].t_ms > readings[0].t_ms:
-            step_ms = readings[1].t_ms - readings[0].t_ms
+        deltas = [
+            readings[i].t_ms - readings[i - 1].t_ms
+            for i in range(1, len(readings))
+            if readings[i].t_ms > readings[i - 1].t_ms
+        ]
+        step_ms = int(round(median(deltas))) if deltas else 10
         max_sustained_ms = 0
         current_streak_start = None
         last_t = None

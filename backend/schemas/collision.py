@@ -2,11 +2,11 @@
 
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class SensorReading(BaseModel):
-    t_ms: int
+    t_ms: int = Field(..., ge=0)
     ax: float
     ay: float
     az: float
@@ -18,12 +18,12 @@ class SensorReading(BaseModel):
 class CollisionAnalyzeRequest(BaseModel):
     """Body for POST /api/v1/collision/analyze (forwarded to collision_engine)."""
 
-    vehicle_id: str
+    vehicle_id: str = Field(..., min_length=1)
     timestamp: datetime
-    readings: List[SensorReading]
+    readings: List[SensorReading] = Field(..., min_length=1)
     # Optional location fields added by the simulate route
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+    latitude: Optional[float] = Field(None, ge=-90.0, le=90.0)
+    longitude: Optional[float] = Field(None, ge=-180.0, le=180.0)
 
 
 class CollisionAnalyzeResponse(BaseModel):

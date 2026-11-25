@@ -316,7 +316,7 @@ export const HospitalMap: React.FC<HospitalMapProps> = ({ accident }) => {
             <strong style="color: #60a5fa;">🏥 ${hospital.name}</strong><br/>
             Facility: Trauma ER Intake Center<br/>
             Road Transit: <strong>${hospital.eta_min} mins</strong> (${hospital.road_distance_km || hospital.distance_km} km)<br/>
-            Hotline: ${hospital.phone || '+91-522-2257540'}
+            Hotline: ${hospital.phone || 'Not available'}
           </div>
         `);
       }

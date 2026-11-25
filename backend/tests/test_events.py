@@ -151,3 +151,18 @@ def test_acknowledge_idempotent(mock_hospital, client):
 def test_acknowledge_404(client):
     r = client.post("/api/v1/events/no-such-event/acknowledge", headers=HOSPITAL_HEADERS)
     assert r.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "bad_override",
+    [
+        {"latitude": 200.0},
+        {"longitude": -200.0},
+        {"severity": "EXTREME"},
+    ],
+)
+def test_create_event_invalid_payload_returns_422(client, bad_override):
+    payload = {**make_event_payload(), **bad_override}
+    r = _post_event(client, payload)
+    assert r.status_code == 422
+    assert "detail" in r.json()

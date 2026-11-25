@@ -1,6 +1,9 @@
-from fastapi import FastAPI, HTTPException, status
+import math
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Dict, Any, List
+from fastapi.responses import JSONResponse
+from typing import Any, Dict, List
 
 from collision_engine.api.schemas import (
     CollisionAnalysisRequest,
@@ -15,6 +18,26 @@ app = FastAPI(
     description="Multi-stage IMU collision analysis, temporal persistence filtering, and severity classification.",
     version="1.0.0"
 )
+
+
+def _sanitize_json(obj: Any) -> Any:
+    if isinstance(obj, float) and not math.isfinite(obj):
+        return str(obj)
+    if isinstance(obj, Exception):
+        return str(obj)
+    if isinstance(obj, dict):
+        return {k: _sanitize_json(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_sanitize_json(v) for v in obj]
+    return obj
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={"detail": _sanitize_json(exc.errors())},
+    )
 
 # CORS middleware for local frontend/backend communication
 app.add_middleware(

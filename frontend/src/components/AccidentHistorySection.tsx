@@ -35,6 +35,8 @@ export const AccidentHistorySection: React.FC<AccidentHistorySectionProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filterTab, setFilterTab] = useState<FilterTab>('ALL');
+  const [severityFilter, setSeverityFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
   // Stats
   const unackCount = useMemo(() => accidents.filter(a => !a.acknowledged).length, [accidents]);
@@ -46,6 +48,8 @@ export const AccidentHistorySection: React.FC<AccidentHistorySectionProps> = ({
       if (filterTab === 'UNACKNOWLEDGED' && acc.acknowledged) return false;
       if (filterTab === 'ACKNOWLEDGED' && !acc.acknowledged) return false;
       if (filterTab === 'CRITICAL_HIGH' && acc.severity !== 'CRITICAL' && acc.severity !== 'HIGH') return false;
+      if (severityFilter !== 'ALL' && acc.severity !== severityFilter) return false;
+      if (statusFilter !== 'ALL' && acc.notification_status !== statusFilter) return false;
 
       // Search query
       if (!searchQuery.trim()) return true;
@@ -53,13 +57,13 @@ export const AccidentHistorySection: React.FC<AccidentHistorySectionProps> = ({
       return (
         acc.accident_id.toLowerCase().includes(q) ||
         acc.vehicle_id.toLowerCase().includes(q) ||
-        acc.patient_id.toLowerCase().includes(q) ||
+        (acc.patient_id ?? '').toLowerCase().includes(q) ||
         (acc.patient?.name && acc.patient.name.toLowerCase().includes(q)) ||
         (acc.patient?.blood_group && acc.patient.blood_group.toLowerCase().includes(q)) ||
         (acc.selected_hospital?.name && acc.selected_hospital.name.toLowerCase().includes(q))
       );
     });
-  }, [accidents, filterTab, searchQuery]);
+  }, [accidents, filterTab, severityFilter, statusFilter, searchQuery]);
 
   return (
     <section className="rounded-2xl border border-slate-800/80 bg-slate-900/60 backdrop-blur-xl p-6 shadow-xl shadow-black/20 space-y-5">
@@ -87,7 +91,7 @@ export const AccidentHistorySection: React.FC<AccidentHistorySectionProps> = ({
         {/* Search & Quick Filters Bar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           {/* Search Box */}
-          <div className="relative min-w-[260px]">
+          <div className="relative min-w-[240px]">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -97,6 +101,31 @@ export const AccidentHistorySection: React.FC<AccidentHistorySectionProps> = ({
               className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono"
             />
           </div>
+
+          <select
+            aria-label="Filter by severity"
+            value={severityFilter}
+            onChange={(e) => setSeverityFilter(e.target.value)}
+            className="bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-500"
+          >
+            <option value="ALL">All Severities</option>
+            <option value="CRITICAL">CRITICAL</option>
+            <option value="HIGH">HIGH</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="LOW">LOW</option>
+          </select>
+
+          <select
+            aria-label="Filter by notification status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-500"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="SENT">SENT</option>
+            <option value="PENDING">PENDING</option>
+            <option value="FAILED">FAILED</option>
+          </select>
 
           {/* Filter Pills */}
           <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-950/80 border border-slate-800 rounded-xl text-xs font-mono">
@@ -278,7 +307,9 @@ export const AccidentHistorySection: React.FC<AccidentHistorySectionProps> = ({
                   </div>
                 ) : (
                   <div className="bg-slate-900/60 p-2.5 rounded-lg text-xs font-mono text-slate-500">
-                    Patient ID {acc.patient_id} record pending lookup.
+                    {acc.patient_id
+                      ? `Patient ID ${acc.patient_id} record unavailable.`
+                      : 'No patient record linked.'}
                   </div>
                 )}
 

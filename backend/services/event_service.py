@@ -11,7 +11,7 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
-from backend.integrations.hospital_client import find_nearest_hospital
+from backend.integrations import hospital_client
 from backend.models.accident import Accident, NotificationStatus
 from backend.models.patient import Patient, VehicleLink
 from backend.notifications import dispatcher
@@ -46,7 +46,7 @@ def create_event(payload: AccidentCreate, db: Session) -> Accident:
         return existing
 
     # b) Find nearest hospital
-    hospital = find_nearest_hospital(payload.latitude, payload.longitude)
+    hospital = hospital_client.find_nearest_hospital(payload.latitude, payload.longitude)
 
     # c) Look up patient
     patient = _resolve_patient(payload.vehicle_id, db)

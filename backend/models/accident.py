@@ -1,7 +1,7 @@
 """Accident ORM model."""
 
 import enum
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, DateTime, Float, String, Text, Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
@@ -40,5 +40,8 @@ class Accident(Base):
     acknowledged_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     patient_id: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        server_default=func.now(),
+        nullable=False,
     )

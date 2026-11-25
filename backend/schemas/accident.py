@@ -1,23 +1,26 @@
 """Pydantic schemas for Accident (CONTRACTS.md section 3)."""
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Literal, Optional
 from pydantic import BaseModel, Field
+
+
+SeverityLiteral = Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]
 
 
 class AccidentCreate(BaseModel):
     """Body for POST /api/v1/events (collision result + lat/lng)."""
 
-    event_id: str = Field(..., description="Unique collision event identifier (accident_id)")
-    vehicle_id: str
+    event_id: str = Field(..., min_length=1, description="Unique collision event identifier (accident_id)")
+    vehicle_id: str = Field(..., min_length=1)
     timestamp: datetime
     collision_detected: bool = True
-    confidence_score: Optional[float] = None
+    confidence_score: Optional[float] = Field(None, ge=0.0, le=1.0)
     impact_magnitude: Optional[float] = None
-    severity: Optional[str] = None
+    severity: Optional[SeverityLiteral] = None
     detection_reason: Optional[str] = None
-    latitude: float
-    longitude: float
+    latitude: float = Field(..., ge=-90.0, le=90.0)
+    longitude: float = Field(..., ge=-180.0, le=180.0)
 
 
 class AccidentOut(BaseModel):

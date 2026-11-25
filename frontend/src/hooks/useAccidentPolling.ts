@@ -24,7 +24,7 @@ const POLLING_INTERVAL_SEC = 5;
 // Pre-enriched initial seed state so Frame 0 has data immediately
 const INITIAL_SEED_ACCIDENTS: AccidentDetail[] = MOCK_SEED_ACCIDENTS.map(acc => ({
   ...acc,
-  patient: MOCK_PATIENTS[acc.patient_id] || null
+  patient: acc.patient_id ? (MOCK_PATIENTS[acc.patient_id] || null) : null
 }));
 
 export function useAccidentPolling(): UseAccidentPollingResult {
@@ -154,6 +154,7 @@ export function useAccidentPolling(): UseAccidentPollingResult {
 
       setAccidents(prev => prev.map(a => a.accident_id === accidentId ? detailed : a));
       setSelectedAccident(prev => prev?.accident_id === accidentId ? detailed : prev);
+      setError(null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to acknowledge incident';
       setError(msg);
@@ -165,12 +166,12 @@ export function useAccidentPolling(): UseAccidentPollingResult {
     const newAccident = await accidentService.injectCollisionEvent(preset);
     soundEffects.playCrashAlertSound();
     let patient: Patient | undefined;
-    if (updated.patient_id) {
-      patient = patientCache.current[updated.patient_id];
+    if (newAccident.patient_id) {
+      patient = patientCache.current[newAccident.patient_id];
       if (!patient) {
         try {
-          patient = await accidentService.getPatientById(updated.patient_id);
-          patientCache.current[updated.patient_id] = patient;
+          patient = await accidentService.getPatientById(newAccident.patient_id);
+          patientCache.current[newAccident.patient_id] = patient;
         } catch {
           // non-fatal: show the accident without a patient card
         }

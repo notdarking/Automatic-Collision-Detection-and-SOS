@@ -1,13 +1,9 @@
 fastapi
 uvicorn[standard]
 pydantic>=2
-pydantic-settings
 numpy
 sqlalchemy
 httpx
-geopy
 twilio
 python-dotenv
 pytest
-pytest-asyncio
-httpx

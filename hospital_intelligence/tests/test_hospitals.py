@@ -46,11 +46,28 @@ def test_health_endpoint(client):
     assert data["port"] == "8002"
 
 
-def test_nearest_hospitals_contract_sample(client):
+def test_nearest_hospitals_contract_sample(client, monkeypatch):
     """
     Test exact request from docs/CONTRACTS.md:
     Request: {"latitude": 26.8467, "longitude": 80.9462, "radius_km": 15}
     """
+    monkeypatch.setattr(
+        "hospital_intelligence.api.main.fetch_hospitals_overpass",
+        lambda lat, lon, radius_km=15.0: (
+            get_mock_hospitals_for_location(lat, lon, radius_km),
+            "mock",
+        ),
+    )
+    monkeypatch.setattr(
+        "hospital_intelligence.ranking.ranker.calculate_distance_matrix",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        "hospital_intelligence.ranking.ranker.calculate_route_and_eta",
+        lambda start_lat, start_lon, dest_lat, dest_lon: estimate_road_distance_and_eta(
+            start_lat, start_lon, dest_lat, dest_lon
+        ),
+    )
     payload = {
         "latitude": 26.8467,
         "longitude": 80.9462,
@@ -85,7 +102,24 @@ def test_nearest_hospitals_contract_sample(client):
         assert -90.0 <= first["route"][0][0] <= 90.0
 
 
-def test_nearest_hospitals_sorted_by_eta(client):
+def test_nearest_hospitals_sorted_by_eta(client, monkeypatch):
+    monkeypatch.setattr(
+        "hospital_intelligence.api.main.fetch_hospitals_overpass",
+        lambda lat, lon, radius_km=15.0: (
+            get_mock_hospitals_for_location(lat, lon, radius_km),
+            "mock",
+        ),
+    )
+    monkeypatch.setattr(
+        "hospital_intelligence.ranking.ranker.calculate_distance_matrix",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        "hospital_intelligence.ranking.ranker.calculate_route_and_eta",
+        lambda start_lat, start_lon, dest_lat, dest_lon: estimate_road_distance_and_eta(
+            start_lat, start_lon, dest_lat, dest_lon
+        ),
+    )
     payload = {"latitude": 26.8467, "longitude": 80.9462, "radius_km": 15}
     response = client.post("/api/v1/location/nearest-hospitals", json=payload)
     assert response.status_code == 200
@@ -160,3 +194,32 @@ def test_matrix_failure_fallback(monkeypatch):
     assert len(ranked) == 5
     etas = [h.eta_min for h in ranked]
     assert etas == sorted(etas)
+
+
+def test_overpass_parses_center_and_unnamed_default(monkeypatch):
+    """Overpass parser reads center coordinates for ways/relations and defaults missing names."""
+    from unittest.mock import MagicMock
+    import hospital_intelligence.discovery.overpass as ov
+
+    monkeypatch.setattr(ov, "_last_overpass_failure_ts", 0.0)
+    fake_resp = MagicMock()
+    fake_resp.json.return_value = {
+        "elements": [
+            {"type": "way", "id": 1, "center": {"lat": 26.85, "lon": 80.95}, "tags": {}}
+        ]
+    }
+    fake_client = MagicMock()
+    fake_client.__enter__.return_value.post.return_value = fake_resp
+    monkeypatch.setattr(ov.httpx, "Client", MagicMock(return_value=fake_client))
+
+    hospitals, source = ov.fetch_hospitals_overpass(26.8467, 80.9462, radius_km=15.0)
+    assert source == "overpass"
+    assert len(hospitals) == 1
+    assert hospitals[0]["name"] == "Unnamed hospital (OpenStreetMap)"
+    assert hospitals[0]["latitude"] == 26.85
+    assert hospitals[0]["longitude"] == 80.95
+
+
+def test_remote_location_returns_empty_not_invented():
+    """Remote coordinates far from demo region must return [] rather than invented hospitals."""
+    assert get_mock_hospitals_for_location(0.0, 0.0, radius_km=15.0) == []

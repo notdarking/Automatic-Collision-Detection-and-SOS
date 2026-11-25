@@ -1,36 +1,142 @@
 # Automated Vehicle Collision Detection & Direct Emergency Hospital Dispatch System
 
-Simulated pipeline: sensor data -> collision verification -> nearest hospital -> mocked SMS/voice alert -> hospital dashboard.
+Simulated end-to-end pipeline: sensor data -> multi-stage collision detection -> nearest hospital discovery & road routing -> mocked SMS/voice alert -> hospital intake dashboard.
 
-## Quick start
-```bash
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+---
+
+## Quick Start (Windows `cmd` & macOS/Linux)
+
+### 1. Clone and create a virtual environment
+
+**Windows (`cmd`):**
+```cmd
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
-cp backend/.env.example backend/.env
 ```
-Run each module (from repo root):
+
+**macOS / Linux (`bash`/`zsh`):**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 2. Create environment files
+
+**Windows (`cmd`):**
+```cmd
+copy backend\.env.example backend\.env
+copy collision_engine\.env.example collision_engine\.env
+copy frontend\.env.example frontend\.env
+```
+
+**macOS / Linux:**
+```bash
+cp backend/.env.example backend/.env
+cp collision_engine/.env.example collision_engine/.env
+cp frontend/.env.example frontend/.env
+```
+
+### Frontend Environment Variables (`frontend/.env`)
+
+| Variable | Default | Description |
+|---|---|---|
+| `VITE_API_BASE_URL` | `http://localhost:8000` | Backend API base URL |
+| `VITE_USE_MOCK_DATA` | `true` | `true` = use built-in sample data (no backend required); `false` = connect live to the backend on port `8000` |
+| `VITE_API_KEY` | `dev-hospital-key` | API key sent in `X-API-Key` header by the dashboard |
+
+To run the dashboard against the live backend, set `VITE_USE_MOCK_DATA=false` in `frontend/.env`.
+
+---
+
+## Running the Full Demo (Terminals in Order)
+
+Open **4 terminals** from the repository root (with `.venv` activated in terminals 1–3):
+
+**Terminal 1 — Collision Engine (port `8001`):**
 ```bash
 uvicorn collision_engine.api.main:app --port 8001 --reload
-uvicorn hospital_intelligence.api.main:app --port 8002 --reload
-uvicorn backend.api.main:app --port 8000 --reload
-cd frontend && npm install && npm run dev
 ```
 
-## Ownership (do not edit another person's folder)
+**Terminal 2 — Hospital Intelligence & Routing (port `8002`):**
+```bash
+uvicorn hospital_intelligence.api.main:app --port 8002 --reload
+```
+
+**Terminal 3 — Backend Core (port `8000`):**
+```bash
+uvicorn backend.api.main:app --port 8000 --reload
+```
+
+*(Optional, from a separate terminal with `.venv` active)* **Seed sample data & run end-to-end CLI demo:**
+```bash
+python -m backend.database.seed
+python demo.py
+```
+
+**Terminal 4 — Hospital Dashboard Frontend (port `3000`):**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Open **http://localhost:3000** in your browser.
+
+> **Windows tip:** If `uvicorn` is not on your PATH after activating `.venv`, run `.venv\Scripts\python.exe -m uvicorn ...` (e.g. `.venv\Scripts\python.exe -m uvicorn backend.api.main:app --port 8000 --reload`).
+
+---
+
+## Running All Test Suites
+
+From the repository root with `.venv` activated:
+
+```bash
+pytest backend/tests -q
+pytest collision_engine/tests -q
+pytest hospital_intelligence/tests -q
+```
+
+Verification / benchmark scripts:
+```bash
+python collision_engine/tests/run_verification.py
+python hospital_intelligence/tests/run_verification.py
+```
+
+Frontend type-check & production build:
+```bash
+cd frontend
+npm run build
+```
+
+---
+
+## Module Ownership
+
 | Folder | Owner | Branch |
 |---|---|---|
-| backend/ (core) | Nivedita | feature/emergency-backend |
-| backend/notifications, patients, auth | Freny | feature/backend-notifications |
-| collision_engine/, hospital_intelligence/ | Devansh | feature/collision-detection, feature/hospital-finder |
-| frontend/ | Vaibhav | feature/hospital-dashboard |
+| `backend/` (core) | `<Owner 1>` | `feature/emergency-backend` |
+| `backend/notifications`, patients, auth | `<Owner 2>` | `feature/backend-notifications` |
+| `collision_engine/`, `hospital_intelligence/` | `<Owner 3>` | `feature/collision-detection`, `feature/hospital-finder` |
+| `frontend/` | `<Owner 4>` | `feature/hospital-dashboard` |
 
-Shared contracts: see `docs/CONTRACTS.md`. Change them only by telling the group.
+Shared API contracts are documented in [`docs/CONTRACTS.md`](docs/CONTRACTS.md).
+
+---
 
 ## Rules
-- Work on your own branch; open a PR into `main`; nobody pushes to `main`.
-- Never commit `.env`. Notifications stay mocked (`MOCK_NOTIFICATIONS=true`).
-- Push every 30-45 minutes.
+- Work on feature branches; open a PR into `main`; do not push directly to `main`.
+- Never commit `.env` files, `.db` files, `.venv/`, or `node_modules/`.
+- Keep `MOCK_NOTIFICATIONS=true` during development and demos.
+
+---
 
 ## Limitations
-Simulated data only (no real crash validation). Cheap sensors saturate near 16g. OSM hospital contact data is sparse. Notifications are mocked. A real deployment would route via 112.
-Collision detection thresholds were tuned and evaluated on simulated data generated by this project, so reported false-alarm rates apply to simulation only. For negative results, confidence_score is the confidence that no collision occurred. Hospital data comes from OpenStreetMap when available; otherwise labelled demo data is used. Hospital contact details and availability are not verified.
+- **Simulated data only:** All sensor streams and crash scenarios are synthetic (no real crash-test validation).
+- **Simulation-tuned thresholds:** Collision detection thresholds were tuned and evaluated on simulated data generated by this project, so reported false-alarm rates apply to simulation only. For negative results, `confidence_score` is the confidence that no collision occurred.
+- **Hardware sensor saturation:** Low-cost MEMS accelerometers typically saturate around `16g`.
+- **Hospital data & availability:** Hospital discovery queries OpenStreetMap Overpass/OSRM when reachable and otherwise falls back to clearly labelled demo data; hospital contact details, trauma capabilities, and bed availability are unverified.
+- **Notifications:** Notifications are mocked by default (`MOCK_NOTIFICATIONS=true`). Real Twilio sending is opt-in via `MOCK_NOTIFICATIONS=false` plus `HOSPITAL_ALERT_PHONE` (trial accounts only reach verified numbers), and commercial/transactional SMS delivery in India requires TRAI DLT registration.
+- **Emergency routing:** A real-world deployment would integrate with official emergency services (`112`) rather than calling hospitals directly.
+- **Patient privacy & consent:** Vehicle-to-patient linking assumes consent for demo purposes; a real deployment requires explicit patient consent and stronger data protection.
+- **Development API keys:** `dev-hospital-key` and `dev-admin-key` are for local demo only, and `VITE_API_KEY` is embedded in the client-side browser bundle.

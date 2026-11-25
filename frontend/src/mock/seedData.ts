@@ -1,63 +1,63 @@
 import { Accident, Patient } from '../types/contracts';
 import { ROAD_ROUTES } from './roadRoutes';
 
-// Patient Records with Medical & Trauma Profiles
+// Patient Records with Medical & Trauma Profiles (demo data)
 // In compliance with clinical protocols, baseline owner records are available for historical verification,
 // while active unverified crash notifications mandate bedside crossmatching before transfusion.
 export const MOCK_PATIENTS: Record<string, Patient> = {
   'PT-001': {
     patient_id: 'PT-001',
-    name: 'Rajesh Sharma',
+    name: 'Rajesh Sharma (demo)',
     blood_group: 'B+',
     allergies: ['Penicillin', 'Sulfa Drugs'],
     medical_conditions: ['Type 2 Diabetes', 'Hypertension'],
     emergency_contact: {
       name: 'Sunita Sharma (Wife)',
-      phone: '+91-98765-43210'
+      phone: '+00-555-0101'
     }
   },
   'PT-002': {
     patient_id: 'PT-002',
-    name: 'Priya Verma',
+    name: 'Priya Verma (demo)',
     blood_group: 'O-',
     allergies: ['Aspirin (NSAIDs)'],
     medical_conditions: ['Asthma'],
     emergency_contact: {
       name: 'Amit Verma (Brother)',
-      phone: '+91-91234-56789'
+      phone: '+00-555-0102'
     }
   },
   'PT-003': {
     patient_id: 'PT-003',
-    name: 'Michael Chen',
+    name: 'Michael Chen (demo)',
     blood_group: 'A+',
     allergies: ['Latex', 'Iodine Radiocontrast'],
     medical_conditions: ['Previous Coronary Stent (2023)'],
     emergency_contact: {
       name: 'Linda Chen (Spouse)',
-      phone: '+1-555-0245'
+      phone: '+00-555-0103'
     }
   },
   'PT-004': {
     patient_id: 'PT-004',
-    name: 'Emily Watson',
+    name: 'Emily Watson (demo)',
     blood_group: 'O+',
     allergies: ['None (NKDA)'],
     medical_conditions: ['Pregnancy (2nd Trimester)'],
     emergency_contact: {
       name: 'David Watson (Father)',
-      phone: '+44-7700-900123'
+      phone: '+00-555-0104'
     }
   },
   'PT-005': {
     patient_id: 'PT-005',
-    name: 'Arjun Patel',
+    name: 'Arjun Patel (demo)',
     blood_group: 'AB-',
     allergies: ['Cephalosporins'],
     medical_conditions: ['None'],
     emergency_contact: {
       name: 'Sunita Patel (Mother)',
-      phone: '+91-98123-45678'
+      phone: '+00-555-0105'
     }
   }
 };
@@ -74,11 +74,11 @@ export const MOCK_SEED_ACCIDENTS: Accident[] = [
     severity: 'CRITICAL',
     impact_magnitude: 15.4,
     selected_hospital: {
-      name: "King George's Medical University Trauma Centre",
+      name: 'MOCK Hospital A (demo data)',
       latitude: 26.8702,
       longitude: 80.9168,
-      address: 'Shah Mina Rd, Chowk, Lucknow, Uttar Pradesh 226003',
-      phone: '+91-522-2257540',
+      address: null,
+      phone: null,
       distance_km: 4.2,
       road_distance_km: 5.1,
       eta_min: 7,
@@ -99,11 +99,11 @@ export const MOCK_SEED_ACCIDENTS: Accident[] = [
     severity: 'HIGH',
     impact_magnitude: 9.8,
     selected_hospital: {
-      name: 'Sanjay Gandhi Postgraduate Institute (SGPGIMS)',
+      name: 'MOCK Hospital B (demo data)',
       latitude: 26.7450,
       longitude: 80.9380,
-      address: 'Raebareli Rd, Lucknow, Uttar Pradesh 226014',
-      phone: '+91-522-2668004',
+      address: null,
+      phone: null,
       distance_km: 6.5,
       road_distance_km: 8.0,
       eta_min: 12,
@@ -124,11 +124,11 @@ export const MOCK_SEED_ACCIDENTS: Accident[] = [
     severity: 'MEDIUM',
     impact_magnitude: 6.8,
     selected_hospital: {
-      name: 'Dr. Ram Manohar Lohia Institute of Medical Sciences',
+      name: 'MOCK Hospital C (demo data)',
       latitude: 26.8620,
       longitude: 80.9980,
-      address: 'Vibhuti Khand, Gomti Nagar, Lucknow, UP 226010',
-      phone: '+91-522-4918504',
+      address: null,
+      phone: null,
       distance_km: 7.1,
       road_distance_km: 9.2,
       eta_min: 14,
@@ -149,11 +149,11 @@ export const MOCK_SEED_ACCIDENTS: Accident[] = [
     severity: 'CRITICAL',
     impact_magnitude: 18.2,
     selected_hospital: {
-      name: "King George's Medical University Trauma Centre",
+      name: 'MOCK Hospital A (demo data)',
       latitude: 26.8702,
       longitude: 80.9168,
-      address: 'Shah Mina Rd, Chowk, Lucknow, Uttar Pradesh 226003',
-      phone: '+91-522-2257540',
+      address: null,
+      phone: null,
       distance_km: 2.1,
       road_distance_km: 2.8,
       eta_min: 4,
@@ -174,11 +174,11 @@ export const MOCK_SEED_ACCIDENTS: Accident[] = [
     severity: 'LOW',
     impact_magnitude: 6.1,
     selected_hospital: {
-      name: 'Civil Hospital Hazratganj',
+      name: 'MOCK Hospital D (demo data)',
       latitude: 26.8510,
       longitude: 80.9450,
-      address: 'Park Rd, Hazratganj, Lucknow, UP 226001',
-      phone: '+91-522-2239012',
+      address: null,
+      phone: null,
       distance_km: 1.4,
       road_distance_km: 1.8,
       eta_min: 4,

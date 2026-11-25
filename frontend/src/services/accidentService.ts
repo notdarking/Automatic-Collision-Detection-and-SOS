@@ -179,11 +179,11 @@ export const accidentService = {
       severity: event.severity || 'CRITICAL',
       impact_magnitude: event.impact_magnitude || 14.5,
       selected_hospital: event.selected_hospital || {
-        name: "King George's Medical University Trauma Centre",
+        name: 'MOCK Hospital A (demo data)',
         latitude: 26.8702,
         longitude: 80.9168,
-        address: 'Shah Mina Rd, Chowk, Lucknow, Uttar Pradesh',
-        phone: '+91-522-2257540',
+        address: null,
+        phone: null,
         distance_km: 3.5,
         road_distance_km: 4.2,
         eta_min: 6,
@@ -196,7 +196,7 @@ export const accidentService = {
       notification_status: event.notification_status || 'SENT',
       acknowledged: false,
       acknowledged_at: null,
-      patient_id: event.patient_id || 'PT-001',
+      patient_id: event.patient_id ?? null,
       detection_reason: event.detection_reason || 'Live simulator injection: 14.5g sensor impact.'
     };
 

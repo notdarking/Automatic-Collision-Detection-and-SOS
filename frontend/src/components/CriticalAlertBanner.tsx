@@ -148,8 +148,14 @@ export const CriticalAlertBanner: React.FC<CriticalAlertBannerProps> = ({
           <div className="text-[11px] text-slate-300 space-y-0.5">
             <div>
               <span className="text-slate-400">Registered Vehicle Owner: </span>
-              <strong className="text-white">{patient?.name || 'Unrecorded'}</strong>
-              <span className="text-slate-500 text-[10px]"> ({patient?.patient_id || 'ID pending'})</span>
+              {activeAccident.patient_id ? (
+                <>
+                  <strong className="text-white">{patient?.name || 'Unrecorded'}</strong>
+                  <span className="text-slate-500 text-[10px]"> ({patient?.patient_id || activeAccident.patient_id})</span>
+                </>
+              ) : (
+                <strong className="text-slate-300">No patient record linked.</strong>
+              )}
             </div>
             <div className="text-[10px] text-red-300/90 flex items-center gap-1 pt-0.5">
               <Stethoscope className="w-3 h-3 text-red-400 shrink-0" />

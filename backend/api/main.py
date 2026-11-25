@@ -5,9 +5,12 @@ Run with:
 """
 
 import logging
+import math
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -50,6 +53,24 @@ def create_app() -> FastAPI:
     )
 
     # ── Global error handlers ─────────────────────────────────────────────────
+    def _sanitize_json(obj: Any) -> Any:
+        if isinstance(obj, float) and not math.isfinite(obj):
+            return str(obj)
+        if isinstance(obj, Exception):
+            return str(obj)
+        if isinstance(obj, dict):
+            return {k: _sanitize_json(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return [_sanitize_json(v) for v in obj]
+        return obj
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        return JSONResponse(
+            status_code=422,
+            content={"detail": _sanitize_json(exc.errors())},
+        )
+
     @app.exception_handler(Exception)
     async def generic_exception_handler(request: Request, exc: Exception):
         logger.error("Unhandled exception: %s", exc, exc_info=True)

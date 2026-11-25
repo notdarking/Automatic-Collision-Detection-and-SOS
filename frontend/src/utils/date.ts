@@ -18,7 +18,13 @@ export function parseUtcDate(timestampStr: string | null | undefined): Date | nu
 export function formatUtcTime(timestampStr: string | null | undefined): string {
   const date = parseUtcDate(timestampStr);
   if (!date) return '--:--:--';
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  return date.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZone: 'UTC',
+  });
 }
 
 export function formatUtcDateTime(timestampStr: string | null | undefined): string {
@@ -30,7 +36,8 @@ export function formatUtcDateTime(timestampStr: string | null | undefined): stri
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: false
+    hour12: false,
+    timeZone: 'UTC',
   });
 }
 
